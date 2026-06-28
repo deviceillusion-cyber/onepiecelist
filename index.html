@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>One Piece Episode Guide</title>
+<style>
+  :root{
+    --bg:#0c0c0e;
+    --card:#15161a;
+    --card-border:#23242a;
+    --gold:#caa454;
+    --gold-soft:#caa45499;
+    --text:#e7e6e2;
+    --text-dim:#8d8d96;
+    --blue:#5b7fff;
+    --blue-soft:#5b7fff22;
+    --canon-bg:#1c2333;
+    --canon-text:#7ea0ff;
+    --mixed-bg:#332b1a;
+    --mixed-text:#e3b95c;
+    --filler-bg:#3a1f24;
+    --filler-text:#e36b78;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:Georgia, 'Times New Roman', serif;
+    padding:56px 0;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 24px;}
+  .header{
+    display:flex;align-items:center;gap:14px;margin-bottom:32px;
+  }
+  .logo{
+    width:48px;height:48px;border-radius:12px;
+    background:#1a1a1a;border:1px solid var(--gold-soft);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--gold);font-size:22px;
+  }
+  .header h1{font-size:22px;margin:0;color:var(--gold);font-weight:700;letter-spacing:.3px;}
+  .header p{margin:2px 0 0;font-size:13px;color:var(--text-dim);font-family:Arial,sans-serif;}
+  .section-label{
+    font-family:Arial,sans-serif;font-size:12px;letter-spacing:1.5px;
+    color:#7f8694;margin:0 0 14px 4px;text-transform:uppercase;
+  }
+  .arc-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:10px;
+    margin-bottom:18px;
+    overflow:hidden;
+  }
+  .arc-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 22px;cursor:pointer;
+  }
+  .arc-row:hover{background:#1a1b20;}
+  .arc-left{display:flex;align-items:center;gap:14px;}
+  .arc-icon{
+    width:40px;height:40px;border-radius:8px;
+    background:#1f2026;display:flex;align-items:center;justify-content:center;
+    font-size:18px;color:var(--gold);font-family:Arial,sans-serif;font-weight:bold;
+    flex-shrink:0;
+  }
+  .arc-name{font-size:15px;font-weight:700;margin:0;color:#f0efe9;}
+  .arc-sub{font-size:12px;color:var(--text-dim);margin:3px 0 0;font-family:Arial,sans-serif;}
+  .arc-toggle{
+    font-family:Arial,sans-serif;font-size:12px;color:var(--blue);
+    border:1px solid var(--blue);padding:6px 14px;border-radius:6px;
+    background:var(--blue-soft);white-space:nowrap;
+  }
+  .arc-toggle.open{color:var(--gold);border-color:var(--gold);background:#caa45422;}
+  .episodes{
+    display:none;
+    border-top:1px solid var(--card-border);
+    padding:14px 14px 18px;
+  }
+  .episodes.open{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
+    gap:8px;
+  }
+  .ep-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:9px 12px;border-radius:6px;font-family:Arial,sans-serif;
+    background:#1a1b20;gap:8px;
+  }
+  .ep-num{font-size:13px;color:#c9c8c2;}
+  .tag{
+    font-size:11px;font-weight:bold;padding:3px 9px;border-radius:5px;letter-spacing:.3px;
+  }
+  .tag.canon{background:var(--canon-bg);color:var(--canon-text);}
+  .tag.mixed{background:var(--mixed-bg);color:var(--mixed-text);}
+  .tag.filler{background:var(--filler-bg);color:var(--filler-text);}
+  .legend{
+    display:flex;gap:16px;margin:0 0 28px 4px;font-family:Arial,sans-serif;font-size:12px;color:var(--text-dim);
+  }
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+  .dot.canon{background:var(--canon-text);}
+  .dot.mixed{background:var(--mixed-text);}
+  .dot.filler{background:var(--filler-text);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">⛵</div>
+    <div>
+      <h1>One Piece Guide</h1>
+      <p>Episode breakdown by arc</p>
+    </div>
+  </div>
+ 
+  <div class="legend">
+    <span><i class="dot canon"></i>Canon</span>
+    <span><i class="dot mixed"></i>Mixed</span>
+    <span><i class="dot filler"></i>Filler</span>
+  </div>
+ 
+  <p class="section-label">Select an arc</p>
+  <div id="arcList"></div>
+</div>
+ 
+<script>
+function parseRanges(str){
+  const ranges=[];
+  str.split(',').forEach(part=>{
+    part=part.trim();
+    if(part.includes('-')){
+      const [a,b]=part.split('-').map(Number);
+      ranges.push([a,b]);
+    } else {
+      const n=Number(part);
+      ranges.push([n,n]);
+    }
+  });
+  return ranges;
+}
+ 
+const canonRanges = parseRanges(`1-44, 48-49, 52-53, 62-67, 70-92, 94-97, 100, 103-130, 144-195, 207-212, 217-219, 227-278, 284-290, 293-302, 304-316, 320-325, 337-353, 355-381, 385-405, 408-417, 422-425, 430-452, 459-488, 490-491, 493-496, 500-505, 507-519, 521-541, 543-573, 579-589, 591-624, 629-632, 634-652, 654-656, 658-678, 680-689, 691-730, 732-736, 739-746, 752-774, 776, 779, 783-788, 790-802, 804-806, 808-877, 880, 886, 891-894, 897-906, 908-923, 925-987, 990, 992-1028, 1031-1083, 1085-1164, 50-51, 93, 213-216, 418-420, 453-456, 497-499, 506, 737, 775, 1084`);
+ 
+const mixedRanges = parseRanges(`45-47, 61, 68-69, 101, 226, 354, 421, 489, 520, 574, 625, 628, 633, 653, 657, 679, 690, 731, 738, 751, 777-778, 789, 803, 807, 878-879, 881-885, 887-890, 924, 988-989, 991`);
+ 
+const fillerRanges = parseRanges(`54-60, 98-99, 102, 131-143, 196-206, 220-225, 279-283, 291-292, 303, 317-319, 326-336, 382-384, 406-407, 426-429, 457-458, 492, 542, 575-578, 590, 626-627, 747-750, 780-782, 895-896, 907, 1029-1030`);
+ 
+function inRanges(ep, ranges){
+  return ranges.some(([a,b])=>ep>=a && ep<=b);
+}
+function getTag(ep){
+  if(inRanges(ep, fillerRanges)) return 'filler';
+  if(inRanges(ep, mixedRanges)) return 'mixed';
+  return 'canon';
+}
+ 
+const arcs = [
+  {name:"East Blue", range:[1,61]},
+  {name:"Alabasta", range:[62,143]},
+  {name:"Skypiea", range:[144,206]},
+  {name:"Davy Back Fight", range:[207,228]},
+  {name:"Water Seven", range:[229,263]},
+  {name:"Enies Lobby", range:[264,336]},
+  {name:"Thriller Bark", range:[337,381]},
+  {name:"Sabaody Archipelago", range:[382,407]},
+  {name:"Amazon Lily", range:[408,421]},
+  {name:"Impel Down", range:[422,458]},
+  {name:"Marineford", range:[459,516]},
+  {name:"Fish-Man Island", range:[517,578]},
+  {name:"Punk Hazard", range:[579,628]},
+  {name:"Dressrosa", range:[629,750]},
+  {name:"Zou", range:[751,782]},
+  {name:"Whole Cake Island", range:[783,891]},
+  {name:"Land of Wano", range:[892,1088]},
+  {name:"Egghead", range:[1089,1155]},
+  {name:"Elbaph", range:[1156,1164]}
+];
+ 
+const list = document.getElementById('arcList');
+ 
+arcs.forEach((arc, idx)=>{
+  const [start,end] = arc.range;
+  const count = end-start+1;
+ 
+  const card = document.createElement('div');
+  card.className = 'arc-card';
+ 
+  const row = document.createElement('div');
+  row.className = 'arc-row';
+  row.innerHTML = `
+    <div class="arc-left">
+      <div class="arc-icon">${idx+1}</div>
+      <div>
+        <p class="arc-name">${arc.name}</p>
+        <p class="arc-sub">Episodes ${start}-${end} (${count} eps)</p>
+      </div>
+    </div>
+    <div class="arc-toggle">Show episodes</div>
+  `;
+ 
+  const epWrap = document.createElement('div');
+  epWrap.className = 'episodes';
+ 
+  for(let ep=start; ep<=end; ep++){
+    const tag = getTag(ep);
+    const epRow = document.createElement('div');
+    epRow.className = 'ep-row';
+    epRow.innerHTML = `<span class="ep-num">Episode ${ep}</span><span class="tag ${tag}">${tag.charAt(0).toUpperCase()+tag.slice(1)}</span>`;
+    epWrap.appendChild(epRow);
+  }
+ 
+  row.addEventListener('click', ()=>{
+    const isOpen = epWrap.classList.contains('open');
+    epWrap.classList.toggle('open');
+    row.querySelector('.arc-toggle').textContent = isOpen ? 'Show episodes' : 'Hide episodes';
+    row.querySelector('.arc-toggle').classList.toggle('open');
+  });
+ 
+  card.appendChild(row);
+  card.appendChild(epWrap);
+  list.appendChild(card);
+});
+</script>
+</body>
+</html>
+ 
